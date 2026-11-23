@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" class="game-expanded">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="description" content="Dylan's SRB2 Web Port brings the full game and soundtrack to your browser.">
+  <meta name="theme-color" content="#101319">
+  <link rel="stylesheet" href="./style.css">
+  <title>Dylan's SRB2 Web Port</title>
+  <meta name="srb2-backend" content="https://dylansrb2port.springtrap77391.chatgpt.site">
+</head>
+<body>
+  <header class="masthead" inert>
+    <div class="container masthead-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+        <h1>Dylan's SRB2 Web Port</h1>
+      </div>
+      <div class="build-version">V1.5</div>
+    </div>
+  </header>
+  <main class="container workspace">
+    <section class="panel play-panel" aria-label="Game">
+      <div id="screen" class="screen expanded">
+        <div id="game-viewport" class="game-viewport">
+          <canvas id="canvas" aria-label="SRB2 game screen" tabindex="0" hidden></canvas>
+        </div>
+        <div class="touch-controls touch-directions" role="group" aria-label="Movement" hidden>
+          <button type="button" data-control="up" aria-label="Up">▲</button>
+          <button type="button" data-control="left" aria-label="Left">◀</button>
+          <button type="button" data-control="right" aria-label="Right">▶</button>
+          <button type="button" data-control="down" aria-label="Down">▼</button>
+        </div>
+        <div class="touch-controls touch-actions" role="group" aria-label="Actions" hidden>
+          <button type="button" data-control="menu" aria-label="Menu or go back">Menu<span>Back</span></button>
+          <button type="button" data-control="fire">Fire</button>
+          <button type="button" data-control="spin" aria-label="Spin or decline">Spin<span>No</span></button>
+          <button type="button" data-control="jump" aria-label="Jump or confirm">Jump<span>OK</span></button>
+        </div>
+        <div id="game-notice" class="game-message" hidden>
+          <p id="game-message" role="status"></p>
+          <button id="cancel-join" class="button secondary compact" type="button" hidden>Cancel</button>
+        </div>
+        <div id="loader" class="loader">
+          <h2>Loading SRB2</h2>
+          <p id="load-status" role="status">Preparing the game…</p>
+          <progress id="download-progress" aria-label="Game download progress" value="0" hidden></progress>
+          <button id="retry" class="button primary" type="button" hidden>Retry</button>
+        </div>
+      </div>
+      <div class="play-foot" inert>
+        <p id="game-status" role="status"></p>
+      </div>
+    </section>
+  </main>
+  <footer class="container footer" inert>
+    <a href="https://github.com/STJr/SRB2/releases/tag/SRB2_release_2.2.15">Official game files</a>
+    <a href="./source.tar.gz" download>Source code</a>
+  </footer>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
