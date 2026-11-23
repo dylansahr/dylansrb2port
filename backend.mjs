@@ -1,3 +1,4 @@
-const endpoint = document.querySelector('meta[name="srb2-backend"]')?.content;
+const relayOrigin = document.querySelector('meta[name="srb2-relay"]')?.content;
 
-export const backend = new URL(endpoint || window.location.origin);
+export const hostedOnPages = Boolean(relayOrigin);
+export const backend = new URL(relayOrigin || window.location.origin);

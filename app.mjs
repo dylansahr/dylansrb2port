@@ -3,7 +3,7 @@ import { loadGameData, unpackModels } from "./game-download.mjs";
 import { endpoint, engineVersion, normalizeAddress } from "./directory.mjs";
 import { createAddonDownload } from "./addon-download.mjs";
 import { createTouchControls } from "./touch-controls.mjs";
-import { backend } from "./backend.mjs";
+import { backend, hostedOnPages } from "./backend.mjs";
 
 const byId = id => document.getElementById(id);
 const siteTitle = document.title;
@@ -31,6 +31,7 @@ if (requestPointerLock) {
 }
 const screen = byId("screen");
 const viewport = byId("game-viewport");
+const stretch = byId("stretch");
 const gameNotice = byId("game-notice");
 const gameMessage = byId("game-message");
 const cancelJoin = byId("cancel-join");
@@ -89,6 +90,27 @@ function fitGame() {
 new ResizeObserver(fitGame).observe(viewport);
 new MutationObserver(fitGame).observe(canvas, { attributeFilter: ["width", "height"] });
 
+const stretchPreference = "srb2-stretch";
+try {
+  if (localStorage.getItem(stretchPreference) === "true") {
+    viewport.classList.add("stretched");
+    stretch.setAttribute("aria-pressed", "true");
+  }
+} catch {
+  // The setting can still be used when browser storage is unavailable.
+}
+stretch.addEventListener("click", () => {
+  const enabled = viewport.classList.toggle("stretched");
+  stretch.setAttribute("aria-pressed", String(enabled));
+  try {
+    localStorage.setItem(stretchPreference, String(enabled));
+  } catch {
+    // The current session still keeps the selected display mode.
+  }
+  canvas.focus({ preventScroll: true });
+});
+screen.addEventListener("contextmenu", event => event.preventDefault());
+
 // WebKit can allow pinch zoom despite the viewport limits.
 for (const type of ["gesturestart", "gesturechange"]) {
   document.addEventListener(type, event => event.preventDefault(), { passive: false });
@@ -108,7 +130,7 @@ async function readJson(path, timeout = 10_000) {
 }
 
 function getLocalRelay() {
-  if (backend.origin !== window.location.origin) return Promise.resolve(null);
+  if (hostedOnPages) return Promise.resolve(null);
   localRelayRequest ??= readJson("/api/local-relay").catch(() => null);
   return localRelayRequest;
 }
@@ -418,6 +440,7 @@ function launchFailed(message) {
   touch.setActive(false);
   clearInterval(syncTimer);
   gameTransport.detach();
+  stretch.hidden = true;
   canvas.hidden = true;
   screen.classList.remove("running");
   loader.hidden = false;
@@ -482,6 +505,7 @@ async function startGame() {
         setGameStatus("Ready. Click the game to use the keyboard.");
         touch.setActive(true);
         fitGame();
+        stretch.hidden = false;
         canvas.focus({ preventScroll: true });
       },
       requestServerDirectory,
@@ -558,5 +582,5 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") saveProgress();
 });
 // Wake the on-demand relay once while the player's game files load.
-void readJson("/api/relay", 8000).catch(() => null);
+void readJson(hostedOnPages ? "/healthz" : "/api/relay", 8000).catch(() => null);
 void startGame();

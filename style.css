@@ -113,6 +113,18 @@ progress { width: min(100%, 20rem); height: .8rem; accent-color: var(--accent); 
   background: #000;
   touch-action: none;
 }
+.game-viewport.stretched #canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.stretch {
+  position: absolute;
+  z-index: 1;
+  top: max(.55rem, env(safe-area-inset-top));
+  right: max(.55rem, env(safe-area-inset-right));
+  background: #171b24eb;
+}
+.stretch[aria-pressed="true"] { color: var(--accent); }
 .screen.expanded #canvas:focus-visible { outline: none; }
 :root.game-expanded, .game-expanded body {
   overflow: hidden;
@@ -180,6 +192,7 @@ progress { width: min(100%, 20rem); height: .8rem; accent-color: var(--accent); 
   -webkit-tap-highlight-color: transparent;
 }
 .touch-controls button span { display: block; font-size: .75rem; color: var(--muted); }
+.screen.touch-enabled .stretch { min-height: 2.75rem; }
 .touch-controls button.pressed, .touch-controls button:active {
   background: var(--accent);
   color: #142207;

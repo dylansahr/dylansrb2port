@@ -1,7 +1,8 @@
 import { gameData, gameDataPath, modelArchive } from "./game-data.mjs";
-import { backend } from "./backend.mjs";
+import { hostedOnPages } from "./backend.mjs";
 
 const cacheName = "srb2-2.2.15-game-data";
+const dataBase = hostedOnPages ? new URL(`.${gameDataPath}`, import.meta.url) : new URL(gameDataPath, location.origin);
 
 function inflate() {
   try {
@@ -36,14 +37,24 @@ async function verifiedBytes(stream, entry, progress) {
 
 export async function loadGameData(name, progress) {
   const entry = gameData[name];
-  const path = new URL(gameDataPath + name, backend).href;
+  const path = new URL(name, dataBase).href;
   const cache = await globalThis.caches?.open(cacheName).catch(() => null);
-  const stored = await cache?.match(path).catch(() => null);
+  let cacheKey = path;
+  let stored = await cache?.match(cacheKey).catch(() => null);
+  if (!stored && cache && hostedOnPages) {
+    // Keep downloads already cached by the Pages build before the hosting move.
+    const keys = await cache.keys().catch(() => []);
+    const previous = keys.find(key => new URL(key.url).pathname === gameDataPath + name);
+    if (previous) {
+      cacheKey = previous.url;
+      stored = await cache.match(cacheKey).catch(() => null);
+    }
+  }
   if (stored?.body) {
     try {
       return await verifiedBytes(stored.body, entry, progress);
     } catch {
-      await cache.delete(path).catch(() => {});
+      await cache.delete(cacheKey).catch(() => {});
       progress(0);
     }
   }
