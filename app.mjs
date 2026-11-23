@@ -56,6 +56,7 @@ let running = false;
 let loading = false;
 let joining = false;
 let relayAttempt;
+let savegameRetryTarget;
 let nextCommand;
 let transport;
 let syncing;
@@ -315,13 +316,14 @@ function cancelRelayJoin() {
   relayAttempt.abort();
   finishRelayWait();
   joining = false;
+  savegameRetryTarget = undefined;
   nextCommand = undefined;
   gameTransport.detach();
   setGameStatus("");
   canvas.focus({ preventScroll: true });
 }
 
-async function joinListedServer(target) {
+async function joinListedServer(target, retrying = false) {
   if (!running || joining) return;
   if (transport?.attached) {
     setGameStatus("End your current game from the SRB2 menu before joining another server.", true);
@@ -338,10 +340,13 @@ async function joinListedServer(target) {
   const server = { address, port, name };
   const attempt = new AbortController();
   relayAttempt = attempt;
+  savegameRetryTarget = retrying ? undefined : target;
   joining = true;
   canvas.focus({ preventScroll: true });
   cancelJoin.hidden = false;
-  setGameStatus(`Opening relay for ${server.name}…`);
+  setGameStatus(retrying
+    ? `Game state download stalled. Rejoining ${server.name}…`
+    : `Opening relay for ${server.name}…`);
   try {
     const config = await connectionConfig(server, attempt.signal);
     if (relayAttempt !== attempt) return;
@@ -359,6 +364,7 @@ async function joinListedServer(target) {
     if (relayAttempt !== attempt) return;
     finishRelayWait();
     joining = false;
+    savegameRetryTarget = undefined;
     nextCommand = undefined;
     gameTransport.detach();
     setGameStatus(error.message, true);
@@ -433,6 +439,7 @@ function launchFailed(message) {
   relayAttempt?.abort();
   finishRelayWait();
   nextCommand = undefined;
+  savegameRetryTarget = undefined;
   running = loading = joining = false;
   resumeGameAudio = undefined;
   restartRequired = true;
@@ -518,8 +525,10 @@ async function startGame() {
         nextCommand = undefined;
         return command;
       },
-      onJoinFinished(joined) {
+      onJoinFinished(joined, savegameStalled) {
         const server = transport?.server;
+        const retryTarget = savegameRetryTarget;
+        savegameRetryTarget = undefined;
         finishRelayWait();
         joining = false;
         if (joined && server) {
@@ -527,7 +536,13 @@ async function startGame() {
           setGameStatus(`Connected to ${server.name}.`);
         } else {
           gameTransport.detach();
-          setGameStatus("");
+          if (savegameStalled && retryTarget) {
+            void joinListedServer(retryTarget, true);
+          } else {
+            setGameStatus(savegameStalled
+              ? "The server stopped sending the game state. Try joining again."
+              : "", savegameStalled);
+          }
         }
       },
     });
