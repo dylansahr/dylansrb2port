@@ -476,9 +476,11 @@ async function startGame() {
   }
   setGameStatus("Starting SRB2…");
   try {
-    const { default: createGame } = await import("./srb2.mjs");
+    const buildQuery = new URL(import.meta.url).search;
+    const { default: createGame } = await import(`./srb2.mjs${buildQuery}`);
     runtime = await createGame({
       canvas,
+      locateFile: filename => new URL(filename + buildQuery, import.meta.url).href,
       srb2Transport: gameTransport,
       addonDownload,
       nextTouchButton: touch.nextButton,
